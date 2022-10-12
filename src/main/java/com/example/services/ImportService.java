@@ -4,6 +4,7 @@ import com.example.dto.SystemItemImportRequest;
 import com.example.exceptions.SystemItemImportException;
 import com.example.model.SystemItem;
 import com.example.model.SystemItemFile;
+import com.example.model.SystemItemFolder;
 import com.example.model.SystemItemImport;
 import com.example.repositories.FileRepository;
 import com.example.repositories.FolderRepository;
@@ -51,6 +52,91 @@ public class ImportService {
                         добавить в список родителя файл
                 Обновить запись о файле
                  */
+                if (past_item.isPresent()){ //Если существует файл в таблице
+                    //SystemItemFolder past_parent = getParent(past_item.get().getParentId());
+                    if (past_item.get().getParentId().equals(i.getParentId())){ //если новая р.папка и прежня совпадают
+                        HashMap<String,Long> tree = treeOfParentWithSize(i.getParentId());
+
+                        for (Map.Entry<String, Long> pair : tree.entrySet()) {
+                            folderRepository.updateParentFolder(
+                                    pair.getKey(),
+                                    longDate,
+                                    Optional.ofNullable(pair.getValue()).orElse(0L)
+                                            - past_item.get().getSize()
+                                            + Optional.ofNullable(i.getSize()).orElse(0L)
+                            );
+                        }
+                    }
+                    else { //если новая р.папка другая
+                        HashMap<String,Long> past_tree = treeOfParentWithSize(past_item.get().getParentId());
+                        HashMap<String,Long> present_tree = treeOfParentWithSize(i.getParentId());
+
+                        if (!past_tree.isEmpty()){ //перепись размера у старого древа размеров - прошлый размер
+                            // updating Mother FOLDER
+                            SystemItemFolder past_parent = getParent(past_item.get().getParentId());
+                            folderRepository.updateParentFolderAndAddItemToChildren(
+                                    past_item.get().getParentId(),
+                                    longDate,
+                                    Optional.ofNullable(past_tree.remove(past_item.get().getParentId())).orElse(0L)-Optional.ofNullable(past_item.get().getSize()).orElse(0L), //скрывается null при неудалении ненайденного элемента
+                                    removeFileFromChildrenString(past_parent.getChildren(), past_item.get().getId()));
+                            // updating next FOLDERS on tree
+                            for (Map.Entry<String, Long> pair : past_tree.entrySet()) {
+                                folderRepository.updateParentFolder(
+                                        pair.getKey(),
+                                        longDate,
+                                        Optional.ofNullable(pair.getValue()).orElse(0L) - Optional.ofNullable(past_item.get().getSize()).orElse(0L)
+                                );
+                            }
+                        }
+
+                        if (!present_tree.isEmpty()){ //запись нового древа размер + новый размер
+                            // updating Mother FOLDER
+                            SystemItemFolder present_parent = getParent(i.getParentId());
+                            folderRepository.updateParentFolderAndAddItemToChildren(
+                                    i.getParentId(),
+                                    longDate,
+                                    Optional.ofNullable(present_tree.remove(i.getParentId())).orElse(0L)+Optional.ofNullable(i.getSize()).orElse(0L), //скрывается null при неудалении ненайденного элемента
+                                    addFileToChildrenString(present_parent.getChildren(), i.getId()));
+                            // updating next FOLDERS on tree
+                            for (Map.Entry<String, Long> pair : present_tree.entrySet()) {
+                                folderRepository.updateParentFolder(
+                                        pair.getKey(),
+                                        longDate,
+                                        Optional.ofNullable(pair.getValue()).orElse(0L) + Optional.ofNullable(i.getSize()).orElse(0L)
+                                );
+                            }
+                        }
+
+                    }
+                    fileRepository.save(new SystemItemFile(i.getId(),i.getUrl(),longDate,i.getParentId(),i.getSize()));
+                }
+                else { //Если нет записи о файле в таблицу
+                    HashMap<String,Long> present_tree = treeOfParentWithSize(i.getParentId());
+                    if (!present_tree.isEmpty()){ //запись нового древа размер + новый размер
+                        // updating Mother FOLDER
+                        SystemItemFolder present_parent = getParent(i.getParentId());
+                        folderRepository.updateParentFolderAndAddItemToChildren(
+                                i.getParentId(),
+                                longDate,
+                                Optional.ofNullable(present_tree.remove(i.getParentId())).orElse(0L)+Optional.ofNullable(i.getSize()).orElse(0L), //скрывается null при неудалении ненайденного элемента
+                                addFileToChildrenString(present_parent.getChildren(), i.getId()));
+                        // updating next FOLDERS on tree
+                        for (Map.Entry<String, Long> pair : present_tree.entrySet()) {
+                            folderRepository.updateParentFolder(
+                                    pair.getKey(),
+                                    longDate,
+                                    Optional.ofNullable(pair.getValue()).orElse(0L) + Optional.ofNullable(i.getSize()).orElse(0L)
+                            );
+                        }
+                    }
+
+                    fileRepository.setItem(i.getId(),
+                            i.getUrl(),
+                            longDate,
+                            i.getParentId(),
+                            i.getSize());
+                }
+
             }
             else if (i.getType().equals(SystemItemImport.SystemItemType.FOLDER)){
                 /*
@@ -66,6 +152,62 @@ public class ImportService {
                 Если папки нет
                     Занести данные о папке в таблицу
                  */
+                Optional<SystemItemFolder> past_item = folderRepository.getById(i.getId());
+                if (past_item.isPresent()){
+                    if (past_item.get().getParentId().equals(i.getParentId())){ //если родители совпадают
+                        if (!past_item.get().getUrl().equals(i.getUrl())){
+                            folderRepository.save(new SystemItemFolder(i.getId(),i.getUrl(),longDate,i.getParentId(),past_item.get().getSize(),past_item.get().getChildren()));
+                        }
+                    }
+                    else { //если отличаются
+                        HashMap<String,Long> past_tree = treeOfParentWithSize(past_item.get().getParentId());
+                        HashMap<String,Long> present_tree = treeOfParentWithSize(i.getParentId());
+
+                        if (!past_tree.isEmpty()){ //перепись размера у старого древа размеров - прошлый размер
+                            // updating Mother FOLDER
+                            SystemItemFolder past_parent = getParent(past_item.get().getParentId());
+                            folderRepository.updateParentFolderAndAddItemToChildren(
+                                    past_item.get().getParentId(),
+                                    longDate,
+                                    Optional.ofNullable(past_tree.remove(past_item.get().getParentId())).orElse(0L)-Optional.ofNullable(past_item.get().getSize()).orElse(0L), //скрывается null при неудалении ненайденного элемента
+                                    removeFileFromChildrenString(past_parent.getChildren(), past_item.get().getId()));
+                            // updating next FOLDERS on tree
+                            for (Map.Entry<String, Long> pair : past_tree.entrySet()) {
+                                folderRepository.updateParentFolder(
+                                        pair.getKey(),
+                                        longDate,
+                                        Optional.ofNullable(pair.getValue()).orElse(0L) - Optional.ofNullable(past_item.get().getSize()).orElse(0L)
+                                );
+                            }
+                        }
+
+                        if (!present_tree.isEmpty()){ //запись нового древа размер + новый размер
+                            // updating Mother FOLDER
+                            SystemItemFolder present_parent = getParent(i.getParentId());
+                            folderRepository.updateParentFolderAndAddItemToChildren(
+                                    i.getParentId(),
+                                    longDate,
+                                    Optional.ofNullable(present_tree.remove(i.getParentId())).orElse(0L)+Optional.ofNullable(past_item.get().getSize()).orElse(0L), //скрывается null при неудалении ненайденного элемента
+                                    addFileToChildrenString(present_parent.getChildren(), i.getId()));
+                            // updating next FOLDERS on tree
+                            for (Map.Entry<String, Long> pair : present_tree.entrySet()) {
+                                folderRepository.updateParentFolder(
+                                        pair.getKey(),
+                                        longDate,
+                                        Optional.ofNullable(pair.getValue()).orElse(0L) + Optional.ofNullable(i.getSize()).orElse(0L)
+                                );
+                            }
+                        }
+                        folderRepository.save(new SystemItemFolder(i.getId(),i.getUrl(),longDate,i.getParentId(),past_item.get().getSize(),past_item.get().getChildren()));
+                    }
+                }
+                else { //Если папки нет в таблице
+                    SystemItemFolder present_parent = getParent(i.getParentId());
+                    if (present_parent != null){
+                        folderRepository.updateParentFolderAndAddItemToChildren( present_parent.getId(), longDate, present_parent.getSize(), addFileToChildrenString(present_parent.getChildren(),i.getId()) );
+                    }
+                    folderRepository.setItem(i.getId(), i.getUrl(), longDate, i.getParentId(), null, null);
+                }
             }
             else throw new SystemItemImportException(String.format("Unknown insert item type %s", i.getType()));
 
@@ -74,7 +216,7 @@ public class ImportService {
         return true;
     }
 
-    private void updatingSystemItemInF (SystemItemImport i, long longDate, SystemItem past_item){
+    /*private void updatingSystemItemInF (SystemItemImport i, long longDate, SystemItem past_item){
         SystemItem currentItem;
         if (i.getType() == SystemItemImport.SystemItemType.FILE) {
             currentItem = new SystemItem(i.getId(),i.getUrl(),longDate,i.getParentId(),i.getType(),i.getSize(),null);
@@ -83,9 +225,9 @@ public class ImportService {
                 currentItem = new SystemItem(i.getId(), i.getUrl(), longDate, i.getParentId(), i.getType(), past_item.getSize(), past_item.getChildren());
         }
         HashMap<String,Long> parentTreeCurrent = treeOfParentWithSize (i.getParentId());
-    }
+    }*/
 
-    @Transactional
+    /*@Transactional
     private void creatingNewSystemItem(SystemItemImport i, long longDate) {
         SystemItem currentItem = new SystemItem(i.getId(), i.getUrl(), longDate,
                                             i.getParentId(), i.getType(), i.getSize(), null);
@@ -117,22 +259,22 @@ public class ImportService {
                 );
             }
         }
-    }
+    }*/
 
-    private SystemItem getParent (String parentId){
-        SystemItem parent = systemItemRepository.getByIdAndType(parentId, SystemItem.SystemItemType.FOLDER)
+    private SystemItemFolder getParent (String parentId){
+        if (parentId == null){
+            return null;
+        }
+        return folderRepository.getById(parentId)
                 .orElseThrow(()->new SystemItemImportException(
-                        String.format("ParentId %s %s not found",
-                                parentId,
-                                SystemItem.SystemItemType.FOLDER)));
-        return parent;
+                        String.format("ParentId %s not found", parentId)));
     }
 
     private HashMap<String, Long> treeOfParentWithSize (String parentId){
         HashMap<String, Long> parentTree = new HashMap<String, Long>();
         while (parentId != null){
             String finalParentId = parentId;
-            SystemItem parent = systemItemRepository.getByIdAndType(parentId, SystemItem.SystemItemType.FOLDER)
+            SystemItemFolder parent = folderRepository.getById(parentId)
                     .orElseThrow(()->new SystemItemImportException(
                             String.format("ParentId %s %s not found when building a tree",
                                     finalParentId,
@@ -144,7 +286,7 @@ public class ImportService {
     }
 
     private boolean isFileTheChild (String children, String itemId){
-        return Arrays.stream(children.split(",")).anyMatch(t->itemId.equals(t));
+        return Arrays.asList(children.split(",")).contains(itemId);
     }
 
     private String addFileToChildrenString (String children, String itemId){

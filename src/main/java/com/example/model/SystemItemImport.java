@@ -12,7 +12,6 @@ public class SystemItemImport {
     private final String url;
     private final String parentId;
     @NotNull
-    //@Pattern(groups = SystemItem.SystemItemType.class)
     private final SystemItemType type;
     private final Long size; // добавить контроль size у папок при получении request
 

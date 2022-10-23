@@ -2,15 +2,12 @@ package com.example.services;
 
 import com.example.dto.SystemItemImportRequest;
 import com.example.exceptions.SystemItemImportException;
-import com.example.model.SystemItem;
 import com.example.model.SystemItemFile;
 import com.example.model.SystemItemFolder;
 import com.example.model.SystemItemImport;
 import com.example.repositories.FileRepository;
 import com.example.repositories.FolderRepository;
-import com.example.repositories.SystemItemRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -20,7 +17,6 @@ import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 
 @Service
 public class ImportService {
-    //private final SystemItemRepository systemItemRepository;
     private final FolderRepository folderRepository;
     private final FileRepository fileRepository;
     public ImportService(FolderRepository folderRepository, FileRepository fileRepository){
@@ -53,7 +49,6 @@ public class ImportService {
                 Обновить запись о файле
                  */
                 if (past_item.isPresent()){ //Если существует файл в таблице
-                    //SystemItemFolder past_parent = getParent(past_item.get().getParentId());
                     if (past_item.get().getParentId().equals(i.getParentId())){ //если новая р.папка и прежня совпадают
                         HashMap<String,Long> tree = treeOfParentWithSize(i.getParentId());
 
@@ -106,7 +101,6 @@ public class ImportService {
                                 );
                             }
                         }
-
                     }
                     fileRepository.save(new SystemItemFile(i.getId(),i.getUrl(),longDate,i.getParentId(),i.getSize()));
                 }
@@ -130,11 +124,7 @@ public class ImportService {
                         }
                     }
 
-                    fileRepository.setItem(i.getId(),
-                            i.getUrl(),
-                            longDate,
-                            i.getParentId(),
-                            i.getSize());
+                    fileRepository.setItem(i.getId(), i.getUrl(), longDate, i.getParentId(), i.getSize());
                 }
 
             }
@@ -215,52 +205,6 @@ public class ImportService {
         }
         return true;
     }
-
-    /*private void updatingSystemItemInF (SystemItemImport i, long longDate, SystemItem past_item){
-        SystemItem currentItem;
-        if (i.getType() == SystemItemImport.SystemItemType.FILE) {
-            currentItem = new SystemItem(i.getId(),i.getUrl(),longDate,i.getParentId(),i.getType(),i.getSize(),null);
-
-        } else if (i.getType() == SystemItemImport.SystemItemType.FOLDER) {
-                currentItem = new SystemItem(i.getId(), i.getUrl(), longDate, i.getParentId(), i.getType(), past_item.getSize(), past_item.getChildren());
-        }
-        HashMap<String,Long> parentTreeCurrent = treeOfParentWithSize (i.getParentId());
-    }*/
-
-    /*@Transactional
-    private void creatingNewSystemItem(SystemItemImport i, long longDate) {
-        SystemItem currentItem = new SystemItem(i.getId(), i.getUrl(), longDate,
-                                            i.getParentId(), i.getType(), i.getSize(), null);
-        HashMap<String,Long> parentTreeCurrent = treeOfParentWithSize(currentItem.getParentId());
-
-        // ошибка в функции save  вынуждает делать свой метод
-        systemItemRepository.setItem(currentItem.getId(),
-                currentItem.getUrl(),
-                currentItem.getDate(),
-                currentItem.getParentId(),
-                currentItem.getType(),
-                currentItem.getSize(),
-                currentItem.getChildren());
-
-        if (!parentTreeCurrent.isEmpty()){
-            // updating Mother FOLDER
-            SystemItem exist_parent = getParent(currentItem.getParentId());
-            systemItemRepository.updateParentFolderAndAddItemToChildren(
-                    currentItem.getParentId(),
-                    longDate,
-                    Optional.ofNullable(parentTreeCurrent.remove(currentItem.getParentId())).orElse(0L)+Optional.ofNullable(currentItem.getSize()).orElse(0L), //скрывается null при неудалении ненайденного элемента
-                    addFileToChildrenString(exist_parent.getChildren(), currentItem.getId()));
-            // updating next FOLDERS on tree
-            for (Map.Entry<String, Long> pair : parentTreeCurrent.entrySet()) {
-                systemItemRepository.updateParentFolder(
-                        pair.getKey(),
-                        longDate,
-                        Optional.ofNullable(pair.getValue()).orElse(0L) + Optional.ofNullable(currentItem.getSize()).orElse(0L)
-                );
-            }
-        }
-    }*/
-
     private SystemItemFolder getParent (String parentId){
         if (parentId == null){
             return null;
@@ -276,9 +220,8 @@ public class ImportService {
             String finalParentId = parentId;
             SystemItemFolder parent = folderRepository.getById(parentId)
                     .orElseThrow(()->new SystemItemImportException(
-                            String.format("ParentId %s %s not found when building a tree",
-                                    finalParentId,
-                                    SystemItem.SystemItemType.FOLDER)));
+                            String.format("ParentId %s not found when building a tree",
+                                    finalParentId)));
             parentTree.put(parent.getId(),parent.getSize());
             parentId = parent.getParentId();
         }
@@ -286,10 +229,13 @@ public class ImportService {
     }
 
     private boolean isFileTheChild (String children, String itemId){
+        if (children != null)
         return Arrays.asList(children.split(",")).contains(itemId);
+        return false;
     }
 
     private String addFileToChildrenString (String children, String itemId){
+        if (children == null) return itemId;
         if (isFileTheChild(children,itemId)){
             return  children;
         }
@@ -297,8 +243,13 @@ public class ImportService {
     }
 
     private String removeFileFromChildrenString (String children, String itemId){
+        if (children == null) throw new SystemItemImportException("Removing children from Null");
         Set <String> childrenSet = Arrays.stream(children.split(",")).collect(Collectors.toSet());
-        childrenSet.remove(itemId);
+        boolean flag = childrenSet.remove(itemId);
+        if (flag)
         return String.join(",",childrenSet);
+        throw new SystemItemImportException("Children not removed from Set, but need removing");
     }
+
+    //private boolean reduceSizeInTree ();
 }

@@ -22,7 +22,7 @@ public class ImportsRestController  {
 
     @PostMapping("/imports")
     public ResponseEntity<?> importItems(@RequestBody @Valid SystemItemImportRequest systemItemImportRequest, Errors errors){
-        //logger.info(request.toString());
+
         if (errors.hasErrors()){
             return ResponseEntity
                     .badRequest()
@@ -31,7 +31,7 @@ public class ImportsRestController  {
         boolean status = importService.insertItems(systemItemImportRequest);
         if (status){
             return ResponseEntity
-                    .status(HttpStatus.ACCEPTED)
+                    .status(HttpStatus.OK)
                     .body("Вставка или обновление прошли успешно.");
         }
         return ResponseEntity

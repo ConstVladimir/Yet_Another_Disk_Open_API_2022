@@ -1,6 +1,5 @@
 package com.example.repositories;
 
-import com.example.model.SystemItem;
 import com.example.model.SystemItemFolder;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;

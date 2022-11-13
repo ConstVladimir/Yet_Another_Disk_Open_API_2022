@@ -5,16 +5,18 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.sql.Timestamp;
+
 @Table
 @Data
 public class SystemItemFolder {
     @Id
     private final String id;
     private final String url;
-    @Column("UPDATE_DATE")
-    private final long date;
+    @Column("update_date")
+    private final Timestamp date;
     private final String parentId;
-    @Column ("SIZE_IT")
+    @Column ("size_it")
     private final Long size;
-    private final String children;
+    private final String [] children;
 }

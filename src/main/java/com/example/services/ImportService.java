@@ -9,6 +9,7 @@ import com.example.repositories.FileRepository;
 import com.example.repositories.FolderRepository;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,9 +27,10 @@ public class ImportService {
 
     public boolean insertItems (SystemItemImportRequest systemItemImportRequest){
 
-        long longDate = ZonedDateTime.parse(systemItemImportRequest.getUpdateDate(),ISO_DATE_TIME)
+        long longDateEX = ZonedDateTime.parse(systemItemImportRequest.getUpdateDate(),ISO_DATE_TIME)
                 .toInstant()
                 .toEpochMilli();
+        Timestamp longDate = new Timestamp(longDateEX);
 
         for (SystemItemImport i : systemItemImportRequest.getItems()) {
             if (i.getType().equals(SystemItemImport.SystemItemType.FILE)){
@@ -144,6 +146,7 @@ public class ImportService {
                  */
                 Optional<SystemItemFolder> past_item = folderRepository.getById(i.getId());
                 if (past_item.isPresent()){
+                    //NULL String.equals(Object)
                     if (past_item.get().getParentId().equals(i.getParentId())){ //если родители совпадают
                         if (!past_item.get().getUrl().equals(i.getUrl())){
                             folderRepository.save(new SystemItemFolder(i.getId(),i.getUrl(),longDate,i.getParentId(),past_item.get().getSize(),past_item.get().getChildren()));

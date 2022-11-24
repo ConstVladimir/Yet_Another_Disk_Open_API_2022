@@ -10,6 +10,8 @@ import com.example.repositories.FolderRepository;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,14 +29,19 @@ public class ImportService {
 
     public boolean insertItems (SystemItemImportRequest systemItemImportRequest){
 
-        long longDateEX = ZonedDateTime.parse(systemItemImportRequest.getUpdateDate(),ISO_DATE_TIME)
-                .toInstant()
-                .toEpochMilli();
-        Timestamp longDate = new Timestamp(longDateEX);
+        String dateStr = systemItemImportRequest.getUpdateDate();
+
+        OffsetDateTime dateSQL = ZonedDateTime.parse(dateStr,ISO_DATE_TIME).toOffsetDateTime();
 
         for (SystemItemImport i : systemItemImportRequest.getItems()) {
             if (i.getType().equals(SystemItemImport.SystemItemType.FILE)){
-                Optional<SystemItemFile> past_item = fileRepository.getById(i.getId());
+                SystemItemFile ImpFile = new SystemItemFile(i, dateSQL);
+                fileRepository.importFile(ImpFile);
+                /*fileRepository.setItem(ImpFile.getId(),
+                        ImpFile.getUrl(),
+                        ImpFile.getDate(),
+                        ImpFile.getParentId(),
+                        ImpFile.getSize());*/
                 /*
                 Если существует файл в таблице
                     получить дерево родительских папок
@@ -50,7 +57,9 @@ public class ImportService {
                         добавить в список родителя файл
                 Обновить запись о файле
                  */
-                if (past_item.isPresent()){ //Если существует файл в таблице
+                //Optional<SystemItemFile> past_item = fileRepository.getById(i.getId());
+//Если есть запись о файле в таблицу
+                /*if (past_item.isPresent()){
                     if (past_item.get().getParentId().equals(i.getParentId())){ //если новая р.папка и прежня совпадают
                         HashMap<String,Long> tree = treeOfParentWithSize(i.getParentId());
 
@@ -105,8 +114,9 @@ public class ImportService {
                         }
                     }
                     fileRepository.save(new SystemItemFile(i.getId(),i.getUrl(),longDate,i.getParentId(),i.getSize()));
-                }
-                else { //Если нет записи о файле в таблицу
+                }*/
+//Если нет записи о файле в таблицу
+                /*else {
                     HashMap<String,Long> present_tree = treeOfParentWithSize(i.getParentId());
                     if (!present_tree.isEmpty()){ //запись нового древа размер + новый размер
                         // updating Mother FOLDER
@@ -127,10 +137,14 @@ public class ImportService {
                     }
 
                     fileRepository.setItem(i.getId(), i.getUrl(), longDate, i.getParentId(), i.getSize());
-                }
-
+                }*/
             }
             else if (i.getType().equals(SystemItemImport.SystemItemType.FOLDER)){
+                SystemItemFolder ImpFolder = new SystemItemFolder(i, dateSQL);
+                folderRepository.importFolder(ImpFolder);
+                /*folderRepository.setItem(ImpFile.getId(),
+                        ImpFile.getDate(),
+                        ImpFile.getParentId());*/
                 /*
                 Если существует папка в таблице
                     сравнить старого нового родителя
@@ -144,7 +158,7 @@ public class ImportService {
                 Если папки нет
                     Занести данные о папке в таблицу
                  */
-                Optional<SystemItemFolder> past_item = folderRepository.getById(i.getId());
+                /*Optional<SystemItemFolder> past_item = folderRepository.getById(i.getId());
                 if (past_item.isPresent()){
                     //NULL String.equals(Object)
                     if (past_item.get().getParentId().equals(i.getParentId())){ //если родители совпадают
@@ -200,14 +214,13 @@ public class ImportService {
                         folderRepository.updateParentFolderAndAddItemToChildren( present_parent.getId(), longDate, present_parent.getSize(), addFileToChildrenString(present_parent.getChildren(),i.getId()) );
                     }
                     folderRepository.setItem(i.getId(), i.getUrl(), longDate, i.getParentId(), null, null);
-                }
+                }*/
             }
             else throw new SystemItemImportException(String.format("Unknown insert item type %s", i.getType()));
-
-
         }
         return true;
     }
+    /*
     private SystemItemFolder getParent (String parentId){
         if (parentId == null){
             return null;
@@ -254,5 +267,5 @@ public class ImportService {
         throw new SystemItemImportException("Children not removed from Set, but need removing");
     }
 
-    //private boolean reduceSizeInTree ();
+    //private boolean reduceSizeInTree ();*/
 }

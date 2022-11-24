@@ -1,22 +1,27 @@
 package com.example.model;
 
 import lombok.Data;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.Table;
+
 
 import java.sql.Timestamp;
+import java.time.OffsetDateTime;
+import java.util.Set;
 
-@Table
 @Data
 public class SystemItemFolder {
-    @Id
     private final String id;
     private final String url;
-    @Column("update_date")
-    private final Timestamp date;
+    private final OffsetDateTime date;
     private final String parentId;
-    @Column ("size_it")
     private final Long size;
-    private final String [] children;
+    private final Set<String> children;
+
+    public  SystemItemFolder (SystemItemImport impItem, OffsetDateTime update){
+        this.id = impItem.getId();
+        this.url = null;
+        this.date = update;
+        this.parentId = impItem.getParentId();
+        this.size = null;
+        this.children = null;
+    }
 }

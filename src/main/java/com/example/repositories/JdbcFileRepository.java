@@ -19,7 +19,7 @@ public class JdbcFileRepository implements FileRepository {
     @Override
     public boolean importFile(SystemItemFile file) {
         PreparedStatementCreatorFactory pscf = new PreparedStatementCreatorFactory(
-                "INSERT INTO system_item_file (id, url, update_date, parent_id, size_it) VALUES (?,?,?,?,?)",
+                "CALL insert_file (?,?,?,?,?)",
                 Types.VARCHAR,Types.VARCHAR, Types.TIMESTAMP_WITH_TIMEZONE, Types.VARCHAR, Types.BIGINT);
         PreparedStatementCreator psc = pscf.newPreparedStatementCreator(
                 Arrays.asList(

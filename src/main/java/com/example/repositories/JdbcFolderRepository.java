@@ -20,7 +20,7 @@ public class JdbcFolderRepository implements FolderRepository {
     @Override
     public boolean importFolder(SystemItemFolder folder) {
         PreparedStatementCreatorFactory pscf = new PreparedStatementCreatorFactory(
-                "INSERT INTO system_item_folder (id, update_date, parent_id) VALUES (?,?,?)",
+                "CALL insert_folder (?,?,?)",
                 Types.VARCHAR, Types.TIMESTAMP_WITH_TIMEZONE, Types.VARCHAR);
         PreparedStatementCreator psc = pscf.newPreparedStatementCreator(
                 Arrays.asList(

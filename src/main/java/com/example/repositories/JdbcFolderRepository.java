@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.Array;
 import java.sql.Types;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -33,8 +34,14 @@ public class JdbcFolderRepository implements FolderRepository {
     }
 
     @Override
-    public boolean deleteFolderById(String id) {
-        return false;
+    public boolean deleteFolderById(String id, OffsetDateTime date) {
+        PreparedStatementCreatorFactory pscf = new PreparedStatementCreatorFactory(
+                "CALL delete_item (?,?);",
+                Types.VARCHAR, Types.TIMESTAMP_WITH_TIMEZONE);
+        PreparedStatementCreator psc = pscf.newPreparedStatementCreator(
+                Arrays.asList(id, date));
+        jdbcOperations.update(psc);
+        return true;
     }
 
     @Override

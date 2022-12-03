@@ -25,16 +25,16 @@ public class ImportsRestController  {
         if (errors.hasErrors()){
             return ResponseEntity
                     .badRequest()
-                    .body("Невалидная схема документа или входные данные не верны.");
+                    .body("Validation Failed");
         }
         boolean status = importService.insertItems(systemItemImportRequest);
         if (status){
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body("Вставка или обновление прошли успешно.");
+                    .body("Successfully");
         }
         return ResponseEntity
                 .badRequest()
-                .body("Невалидная схема документа или входные данные не верны.");
+                .body("Validation Failed");
     }
 }

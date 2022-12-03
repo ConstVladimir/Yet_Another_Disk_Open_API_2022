@@ -17,8 +17,7 @@ public class DeleteService {
         this.fileRepository = fileRepository;
     }
 
-    public boolean deleteItem ( String id, String dateStr){
-        OffsetDateTime date = ZonedDateTime.parse(dateStr,ISO_DATE_TIME).toOffsetDateTime();
+    public boolean deleteItem ( String id, OffsetDateTime date){
         fileRepository.deleteFileById(id, date);
         //folderRepository.deleteFolderById(id, date);
         return true;

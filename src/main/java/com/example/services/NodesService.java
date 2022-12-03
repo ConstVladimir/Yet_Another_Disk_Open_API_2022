@@ -1,10 +1,14 @@
 package com.example.services;
 
+import com.example.model.SystemItem;
+import com.example.model.SystemItemFolder;
 import com.example.repositories.FileRepository;
 import com.example.repositories.FolderRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -15,7 +19,8 @@ public class NodesService {
         this.folderRepository = folderRepository;
         this.fileRepository = fileRepository;
     }
-    /*Optional<SystemItem> nodeItem (String id){
-        return true;
-    }*/
+
+    public List<SystemItem> getFolder (String id){
+        return folderRepository.getFolderById(id);
+    }
 }

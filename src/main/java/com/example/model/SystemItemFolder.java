@@ -3,7 +3,6 @@ package com.example.model;
 import lombok.Data;
 
 
-import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.util.Set;
 

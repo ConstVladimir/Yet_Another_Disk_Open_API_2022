@@ -1,5 +1,6 @@
 package com.example.repositories;
 
+import com.example.model.SystemItem;
 import com.example.model.SystemItemFile;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -46,12 +47,7 @@ public class JdbcFileRepository implements FileRepository {
     }
 
     @Override
-    public Optional<SystemItemFile> getFileById(String id) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<List<SystemItemFile>> getFilesByParentId(String parentId) {
+    public Optional<SystemItem> getFileById(String id) {
         return Optional.empty();
     }
 }

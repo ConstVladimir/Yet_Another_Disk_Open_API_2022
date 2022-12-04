@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,8 +20,8 @@ public class NodesRestController {
     }
 
     @GetMapping ("/node/{id}")
-    public ResponseEntity<?> getNode (@PathVariable String id) {
-        List<SystemItem> answer = nodesService.getFolder(id);
+    public ResponseEntity<?> getNode (@PathVariable String id){
+        SystemItem answer = nodesService.getFolder(id);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(answer);

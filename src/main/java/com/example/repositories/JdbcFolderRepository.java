@@ -5,6 +5,7 @@ import com.example.model.SystemItemFolder;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.PreparedStatementCreatorFactory;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
@@ -13,6 +14,7 @@ import java.sql.Types;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 
@@ -48,11 +50,19 @@ public class JdbcFolderRepository implements FolderRepository {
     }
 
     @Override
-    public List<SystemItem> getFolderById(String id) {
-        List<SystemItem> puff = jdbcOperations.query(String.format("SELECT * FROM get_item ('%s');", id), this::mapRowToSystemItem);
-
-
-        return puff;
+    public SystemItem getFolderById(String id) {
+        //SqlRowSet puff = jdbcOperations.queryForRowSet(String.format("SELECT * FROM get_item ('%s');", id));
+        Map<String,SystemItem> rows = jdbcOperations.queryForStream(String.format("SELECT * FROM get_item ('%s');", id),this::mapRowToSystemItem).collect(Collectors.toMap(t-> t.getId(), t->t));
+        //List<SystemItem> puff = jdbcOperations.query(String.format("SELECT * FROM get_item ('%s');", id), this::mapRowToSystemItem);
+        //Map<String,SystemItem> folders = puff.stream().filter(item->item.getType().equals(SystemItem.SystemItemType.FOLDER)).collect(Collectors.toMap(it->it.getId(),it->it));
+        //Map<String,SystemItem> files = puff.stream().filter(item->item.getType().equals(SystemItem.SystemItemType.FILE)).collect(Collectors.toMap(it->it.getId(),it->it));
+        for (Map.Entry<String, SystemItem> item : rows.entrySet()){
+            if (!item.getKey().equals(id)){
+                rows.get(item.getValue().getParentId()).getChildren().add(item.getValue());
+                rows.get(item.getValue().getParentId()).setSize(Optional.ofNullable(rows.get(item.getValue().getParentId()).getSize()).orElse(0L)+Optional.ofNullable(item.getValue().getSize()).orElse(0L));
+            }
+        }
+        return rows.get(id);
     }
 
     @Override
@@ -68,7 +78,7 @@ public class JdbcFolderRepository implements FolderRepository {
                     row.getString("update_date").replace(" ", "T"),
                     row.getString ("parent_id"),
                     SystemItem.SystemItemType.valueOf(row.getString ("item_t")),
-                    row.getString("size_it"),
+                    row.getLong("size_it"),
                     new HashSet<SystemItem>()
             );
     }

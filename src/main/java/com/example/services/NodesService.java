@@ -6,6 +6,7 @@ import com.example.repositories.FileRepository;
 import com.example.repositories.FolderRepository;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +21,7 @@ public class NodesService {
         this.fileRepository = fileRepository;
     }
 
-    public List<SystemItem> getFolder (String id){
+    public SystemItem getFolder (String id) {
         return folderRepository.getFolderById(id);
     }
 }

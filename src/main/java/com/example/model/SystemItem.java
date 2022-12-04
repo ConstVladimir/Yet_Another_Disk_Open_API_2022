@@ -1,5 +1,6 @@
 package com.example.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
@@ -8,6 +9,7 @@ import java.time.OffsetDateTime;
 import java.util.Set;
 
 @Data
+@AllArgsConstructor
 public class SystemItem {
     @NotNull
     private final String id;
@@ -17,8 +19,8 @@ public class SystemItem {
     private final String parentId;
     @NotNull
     private final SystemItemType type;
-    private final String size;
-    private final Set<SystemItem> children;
+    private    Long size;
+    private    Set<SystemItem> children;
     public enum SystemItemType {
         FILE, FOLDER
     }

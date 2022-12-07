@@ -59,9 +59,9 @@ public class JdbcFolderRepository implements FolderRepository {
         for (Map.Entry<String, SystemItem> item : rows.entrySet()){
             if (!item.getKey().equals(id)){
                 rows.get(item.getValue().getParentId()).getChildren().add(item.getValue());
-                rows.get(item.getValue().getParentId()).setSize(Optional.ofNullable(rows.get(item.getValue().getParentId()).getSize()).orElse(0L)+Optional.ofNullable(item.getValue().getSize()).orElse(0L));
             }
         }
+        rows.get(id).getSize();
         return rows.get(id);
     }
 

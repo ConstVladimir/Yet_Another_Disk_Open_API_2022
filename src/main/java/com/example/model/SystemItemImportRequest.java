@@ -1,4 +1,4 @@
-package com.example.dto;
+package com.example.model;
 
 import com.example.model.SystemItemImport;
 import lombok.Data;

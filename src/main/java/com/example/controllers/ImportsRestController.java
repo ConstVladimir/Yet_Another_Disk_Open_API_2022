@@ -1,6 +1,6 @@
 package com.example.controllers;
 
-import com.example.dto.SystemItemImportRequest;
+import com.example.model.SystemItemImportRequest;
 
 import com.example.services.ImportService;
 import org.springframework.http.HttpStatus;

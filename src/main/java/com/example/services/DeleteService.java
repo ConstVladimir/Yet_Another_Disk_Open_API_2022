@@ -1,25 +1,18 @@
 package com.example.services;
 
-import com.example.repositories.FileRepository;
-import com.example.repositories.FolderRepository;
+import com.example.repositories.SysItemsRepository;
 import org.springframework.stereotype.Service;
 import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
-
-import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 
 @Service
 public class DeleteService {
-    private final FolderRepository folderRepository;
-    private final FileRepository fileRepository;
-    public DeleteService(FolderRepository folderRepository, FileRepository fileRepository){
-        this.folderRepository = folderRepository;
-        this.fileRepository = fileRepository;
+    private final SysItemsRepository sysItemsRepository;
+    public DeleteService(SysItemsRepository sysItemsRepository){
+        this.sysItemsRepository = sysItemsRepository;
     }
 
     public boolean deleteItem ( String id, OffsetDateTime date){
-        fileRepository.deleteFileById(id, date);
-        //folderRepository.deleteFolderById(id, date);
+        sysItemsRepository.deleteSysItemById(id, date);
         return true;
     }
 }

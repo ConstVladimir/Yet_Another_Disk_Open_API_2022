@@ -127,7 +127,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SystemItem"
+                $ref: "#/components/schemas/SystemItemResponse"
         "404":
           description: Элемент не найден.
           content:
@@ -289,7 +289,7 @@ components:
           description: Список всех дочерних элементов. Для файлов поле равно null.
           type: array
           items:
-            $ref: "#/components/schemas/SystemItem"
+            $ref: "#/components/schemas/SystemItemResponse"
       example:
         id: "элемент_1_2"
         url: null
